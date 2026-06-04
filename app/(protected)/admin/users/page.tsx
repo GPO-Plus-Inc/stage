@@ -6,25 +6,34 @@ import api from "@/lib/axios";
 export default function Page() {
 
   const [roles, setRoles] = useState<any[]>([]);
+  const [orgs, setOrgs] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     role_id: "",
-    password: ""
+    password: "",
+    organization_id:""
   });
 
   // roles load
   useEffect(() => {
 
+
+    loadRoles();
+    loadOrgs();
+
+  }, []);
+
+
     const loadRoles = async () => {
       const res = await api.get("/v1/roles");
       setRoles(res.data.data);
     };
-
-    loadRoles();
-
-  }, []);
+    const loadOrgs = async () => {
+      const res = await api.get("/v1/getOrg");
+      setOrgs(res.data.data);
+    };
 
   const handleChange = (e:any) => {
 
@@ -49,7 +58,8 @@ export default function Page() {
         name:"",
         email:"",
         role_id:"",
-        password:""
+        password:"",
+        organization_id:""
       });
 
     } catch (error:any) {
@@ -134,6 +144,28 @@ export default function Page() {
                 {roles.map((role:any)=>(
                   <option key={role._id} value={role._id}>
                     {role.name}
+                  </option>
+                ))}
+
+              </select>
+
+            </div>
+
+            <div className="col-xs-4 form-group">
+              <label>Organization</label>
+
+              <select
+                name="organization_id"
+                className="form-control"
+                value={form.organization_id}
+                onChange={handleChange}
+              >
+
+                <option>Select Role</option>
+
+                {orgs.map((org:any)=>(
+                  <option key={org._id} value={org._id}>
+                    {org.name}
                   </option>
                 ))}
 

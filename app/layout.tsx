@@ -27,7 +27,7 @@ export default function RootLayout({
      <head>
     <meta charSet="utf-8"/>
     <meta httpEquiv="X-UA-Compatible" content="IE=edge"/>
-    <title>AdminLTE 2 | Dashboard</title>     
+    <title>Prism Plus</title>     
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport"/>
     <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/> 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"/> 
