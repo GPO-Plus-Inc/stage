@@ -1,13 +1,14 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import JobType from "@/component/templateComponent/JobType"
 import NotificationTemplate from "@/component/templateComponent/NotificationTemplate"
+import api from "@/lib/axios";
 
 // ====================== FULL INVOICE MODAL (sab fields + live preview) ======================
 const InvoiceCreateModal = ({ isOpen, onClose }:any) => {
   // ALL STATES (no field skipped)
   const [templateName, setTemplateName] = useState("");
-  const [templateType, setTemplateType] = useState("Invoice (with pricing)");
+  const [templateType, setTemplateType] = useState<number>(1);
   const [companyName, setCompanyName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
@@ -23,6 +24,8 @@ const InvoiceCreateModal = ({ isOpen, onClose }:any) => {
   const [footerText, setFooterText] = useState("Thank you for your business!");
   const [invoiceDate, setInvoiceDate] = useState("3/23/2026");
   const [dueDate, setDueDate] = useState("4/22/2026");
+
+
 
   const handleSave = async () => {
     if (!templateName.trim()) {
@@ -52,17 +55,8 @@ const InvoiceCreateModal = ({ isOpen, onClose }:any) => {
     };
 
     try {
-      const res = await fetch("/api/templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
+      const res = await api.post("/v1/templateAdd",data) 
         alert("Invoice Template Saved to Database!");
-        onClose();
-      } else {
-        alert("Save failed");
-      }
     } catch (err) {
       console.error(err);
       alert("Error saving to DB");
@@ -70,6 +64,8 @@ const InvoiceCreateModal = ({ isOpen, onClose }:any) => {
   };
 
   if (!isOpen) return null;
+
+
 
   return (
  <div className="modal-overlay">
@@ -94,10 +90,9 @@ const InvoiceCreateModal = ({ isOpen, onClose }:any) => {
               </div>
               <div className="form-group">
                 <label>Template Type</label>
-                <select className="form-control" value={templateType} onChange={e => setTemplateType(e.target.value)}>
-                  <option>Invoice (with pricing)</option>
-                  <option>Invoice (without pricing)</option>
-                  <option>Service Report</option>
+                <select className="form-control" value={templateType} onChange={(e) => setTemplateType(Number(e.target.value))}>
+                   <option value={1}>Invoice (without pricing)</option>
+                  <option value={2}>Service Report</option>
                 </select>
               </div>
 
@@ -174,7 +169,7 @@ const InvoiceCreateModal = ({ isOpen, onClose }:any) => {
               <div style={{border:"1px solid #ddd", borderRadius:"6px", overflow:"hidden", background:"#fff", boxShadow:"0 2px 8px rgba(0,0,0,0.1)"}}>
                 <div style={{background:headerColor, color:"white", padding:"20px", display:"flex", justifyContent:"space-between"}}>
                   <div>
-                    <strong style={{fontSize:"24px"}}>{templateType.includes("Invoice") ? "INVOICE" : "SERVICE REPORT"}</strong>
+                    <strong style={{fontSize:"24px"}}>{templateType===1 ? "INVOICE" : "SERVICE REPORT"}</strong>
                     <div style={{fontSize:"13px", marginTop:"8px"}}>
                       {companyName || "company name"}<br />
                       {address || "address details"}<br />
@@ -242,6 +237,29 @@ const JobCreateModal = ({ isOpen, onClose }:any) => {
   const [defaultInvoice, setDefaultInvoice] = useState("");
   const [defaultReport, setDefaultReport] = useState("");
 
+  const [templateList, setTemplateList] = useState<any[]>([]);
+
+  const invoiceTemplates = templateList.filter(
+  (item) => Number(item.templateType) === 1
+);
+
+const serviceReportTemplates = templateList.filter(
+  (item) => Number(item.templateType) === 2
+);
+
+const getTemplateList = async () => {
+  try {
+    const res = await api.get("/v1/templateList");
+    setTemplateList(res.data.data || []);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+useEffect(() => {
+  getTemplateList();
+}, []);
+
   const addItem = () => {
     if (newItem.trim()) {
       setChecklist([...checklist, newItem.trim()]);
@@ -254,27 +272,18 @@ const JobCreateModal = ({ isOpen, onClose }:any) => {
       alert("Template Name and Job Title required!");
       return;
     }
-
-    const data = {
-      templateName,
-      jobTitle,
-      jobDescription,
-      checklist,
-      defaultInvoice,
-      defaultReport,
-      createdAt: new Date().toISOString(),
-    };
+ 
 
     try {
-      const res = await fetch("/api/job-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        alert("Job Template Saved to Database!");
-        onClose();
-      }
+      const res =  await api.post("/v1/jobtemplateAdd", {
+  templateName,
+  jobTitle,
+  jobDescription,
+  checklist,
+  defaultInvoice,
+  defaultReport,
+});
+        alert("Job Template Saved to Database!"); 
     } catch (err) {
       alert("Error saving Job Template");
     }
@@ -325,19 +334,35 @@ const JobCreateModal = ({ isOpen, onClose }:any) => {
           <div className="row">
             <div className="col-md-6">
               <label>Default Invoice Template</label>
-              <select className="form-control" value={defaultInvoice} onChange={e=>setDefaultInvoice(e.target.value)}>
-                <option value="">— None —</option>
-                <option>Default Invoice</option>
-                <option>Standard Invoice</option>
-              </select>
+             <select
+  className="form-control"
+  value={defaultInvoice}
+  onChange={(e) => setDefaultInvoice(e.target.value)}
+>
+  <option value="">-- Select Invoice Template --</option>
+
+  {invoiceTemplates.map((item) => (
+    <option key={item._id} value={item._id}>
+      {item.templateName}
+    </option>
+  ))}
+</select>
             </div>
             <div className="col-md-6">
               <label>Default Service Report Template</label>
-              <select className="form-control" value={defaultReport} onChange={e=>setDefaultReport(e.target.value)}>
-                <option value="">— None —</option>
-                <option>Default Service Report</option>
-                <option>Detailed Report</option>
-              </select>
+              <select
+  className="form-control"
+  value={defaultReport}
+  onChange={(e) => setDefaultReport(e.target.value)}
+>
+  <option value="">-- Select Service Report Template --</option>
+
+  {serviceReportTemplates.map((item) => (
+    <option key={item._id} value={item._id}>
+      {item.templateName}
+    </option>
+  ))}
+</select>
             </div>
           </div>
         </div>
@@ -360,17 +385,54 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("all");
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [jobTemplates, setJobTemplates] = useState<any[]>([]);
 
-  // Dummy data
-  const templatesData = [
-    { id: 1, name: "Default Invoice", type: "Invoice", showsPricing: true },
-    { id: 2, name: "Default Service Report", type: "Service Report", showsPricing: false },
-    { id: 3, name: "Commercial Invoice", type: "Invoice", showsPricing: true },
-  ];
+const invoiceTemplates = templates.filter(
+  (item) => Number(item.templateType) === 1
+);
 
-  const filtered = activeTab === "all" ? templatesData : 
-                  activeTab === "invoices" ? templatesData.filter(t => t.type === "Invoice") : 
-                  templatesData.filter(t => t.type === "Service Report");
+const reportTemplates = templates.filter(
+  (item) => Number(item.templateType) === 2
+);
+
+const filtered =
+  activeTab === "all"
+    ? templates
+    : activeTab === "invoices"
+    ? invoiceTemplates
+    : reportTemplates;
+
+
+      const getTemplates = async () => {
+  try {
+    const res = await api.get("/v1/templateList");
+    setTemplates(res.data.data || []);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const getJobTemplates = async () => {
+  try {
+    const res = await api.get("/v1/jobtemplateList");
+
+    setJobTemplates(res.data.data || []);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+useEffect(() => {
+  getTemplates();
+   getJobTemplates();
+}, []);
+
+
+  // const filtered = activeTab === "all" ? templatesData : 
+  //                 activeTab === "invoices" ? templatesData.filter(t => t.type === "Invoice") : 
+  //                 templatesData.filter(t => t.type === "Service Report");
 
   return (
     <section className="content">
@@ -389,19 +451,41 @@ export default function Page() {
         <div className="box-body">
           {/* TABS */}
           <div style={{marginBottom:"20px"}}>
-            <button className={`btn ${activeTab==="all"?"btn-primary":"btn-default"}`} onClick={()=>setActiveTab("all")} style={{marginRight:"5px"}}>All Templates ({templatesData.length})</button>
-            <button className={`btn ${activeTab==="invoices"?"btn-primary":"btn-default"}`} onClick={()=>setActiveTab("invoices")} style={{marginRight:"5px"}}>Invoices ({templatesData.filter(t=>t.type==="Invoice").length})</button>
-            <button className={`btn ${activeTab==="reports"?"btn-primary":"btn-default"}`} onClick={()=>setActiveTab("reports")}>Service Reports ({templatesData.filter(t=>t.type==="Service Report").length})</button>
+            <button className={`btn ${activeTab==="all"?"btn-primary":"btn-default"}`} onClick={()=>setActiveTab("all")} style={{marginRight:"5px"}}>All Templates ({templates.length})</button>
+            <button className={`btn ${activeTab==="invoices"?"btn-primary":"btn-default"}`} onClick={()=>setActiveTab("invoices")} style={{marginRight:"5px"}}>Invoices ({invoiceTemplates.length})</button>
+            <button className={`btn ${activeTab==="reports"?"btn-primary":"btn-default"}`} onClick={()=>setActiveTab("reports")}>Service Reports ({reportTemplates.length})</button>
           </div>
 
           {/* CARDS */}
           <div style={{display:"flex", flexWrap:"wrap", gap:"20px"}}>
-            {filtered.map(t => (
-              <div key={t.id} style={{width:"320px", border:"1px solid #ddd", borderRadius:"6px", padding:"16px", background:"#fff"}}>
-                <strong>{t.name}</strong><br />
-                <small>Type: {t.type} • Pricing: {t.showsPricing ? "Yes" : "No"}</small>
-              </div>
-            ))}
+           {filtered.map((t) => (
+  <div
+    key={t._id}
+    style={{
+      width: "320px",
+      border: "1px solid #ddd",
+      borderRadius: "6px",
+      padding: "16px",
+      background: "#fff",
+    }}
+  >
+    <strong>{t.templateName}</strong>
+
+    <br />
+
+    <small>
+      Type : {t.templateType === 1 ? "Invoice" : "Service Report"}
+    </small>
+
+    <br />
+
+    <small>{t.companyName}</small>
+
+    <br />
+
+    <small>Status : {t.status}</small>
+  </div>
+))}
           </div>
         </div>
       </div>
@@ -417,8 +501,87 @@ export default function Page() {
             </button>
           </div>
         </div>
-        <div className="box-body">
-          <p style={{color:"#666"}}>No job templates yet. Click New Job Template to create one.</p>
+        <div className="box-body"> 
+         <div className="row">
+  {jobTemplates.map((item) => (
+    <div className="col-md-4" key={item._id}>
+      <div
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          padding: "15px",
+          marginBottom: "15px",
+          background: "#fff",
+          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h4>{item.jobTitle}</h4>
+
+        <p>
+          <strong>Template:</strong> {item.templateName}
+        </p>
+
+        <p>
+          <strong>Description:</strong>
+          <br />
+          {item.jobDescription || "N/A"}
+        </p>
+
+        <p>
+          <strong>Invoice Template:</strong>
+          <br />
+          {item.defaultInvoice?.templateName || "N/A"}
+        </p>
+
+        <p>
+          <strong>Service Report:</strong>
+          <br />
+          {item.defaultReport?.templateName || "N/A"}
+        </p>
+
+        <p>
+          <strong>Status:</strong>{" "}
+          <span
+            className={`label ${
+              item.status === "active"
+                ? "label-success"
+                : "label-danger"
+            }`}
+          >
+            {item.status}
+          </span>
+        </p>
+
+        {item?.checklist?.length > 0 && (
+          <>
+            <strong>Checklist:</strong>
+            <ul style={{ paddingLeft: "18px" }}>
+              {item.checklist.map((check:string, index:number) => (
+                <li key={index}>{check}</li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {/*<div
+          style={{
+            marginTop: "10px",
+            display: "flex",
+            gap: "10px",
+          }}
+        >
+          <button className="btn btn-primary btn-sm">
+            Edit
+          </button>
+
+          <button className="btn btn-danger btn-sm">
+            Delete
+          </button>
+        </div>*/}
+      </div>
+    </div>
+  ))}
+</div>
         
         </div>
       </div>

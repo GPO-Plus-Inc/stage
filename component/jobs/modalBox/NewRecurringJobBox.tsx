@@ -21,7 +21,8 @@ export default function NewJob() {
     jobTemplate: "",
     title: "",
     client: "",
-    assignedTechnician: "",
+    frequency: "",
+    intervalx: "",
     priority: "Medium",
     scheduleStart: "",
     scheduleEnd: "",
@@ -198,14 +199,14 @@ const handleTemplateChange = (e:any) => {
      const payload = {
   ...formData,
 
-  checklist: checklist.map((item:any) => ({
+  checklist: checklist.map((item) => ({
     type: item.type,
     title: item.title,
   })),
 };
-      const { data } = await axios.post("/v1/jobAdd", payload); // Adjust endpoint if needed
+      const { data } = await axios.post("/v1/recurringJobAdd", payload); // Adjust endpoint if needed
 
-      setMessage({ type: "success", text: "Job created successfully!" });
+      setMessage({ type: "success", text: "Recurring Job created successfully!" });
       
       // Optional: Reset form after success
       // setFormData({ ...initialState });
@@ -283,28 +284,18 @@ const handleTemplateChange = (e:any) => {
 </select>
             </div>
             <div className="col-xs-6 form-group">
-              <label>Assigned Technician</label>
-               <select
-  name="assignedTechnician"
-  value={formData.assignedTechnician}
-  onChange={handleChange}
-  className="form-control"
->
-  <option value="">
-    {technicianLoading
-      ? "Loading..."
-      : "Select Technician"}
-  </option>
+              <label>Frequency*</label>
+              <select 
+                className="form-control">
+                <option>Daily</option>
+              </select>
 
-  {technician.map((technician: any) => (
-    <option
-      key={technician._id}
-      value={technician._id}
-    >
-      {technician.name}
-    </option>
-  ))}
-</select>
+            </div>  <div className="col-xs-6 form-group">
+              <label>Interval*</label>
+              <input
+                type="number"
+                className="form-control"/>
+              
 
             </div>
           </div>

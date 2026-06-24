@@ -77,13 +77,13 @@ export default function aside() {
           </a>
         </li>
         <li className="treeview">
-          <a href="#"> 
+          <a href="/inventory"> 
           <i className="fa fa-circle-o" /> 
             <span>Inventory</span> 
           </a>
         </li>
         <li className="treeview">
-          <a href="#"> 
+          <a href="/billing"> 
           <i className="fa fa-circle-o" /> 
             <span>Billing</span> 
           </a>

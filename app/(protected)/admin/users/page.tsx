@@ -161,7 +161,7 @@ export default function Page() {
                 onChange={handleChange}
               >
 
-                <option>Select Role</option>
+                <option>--Select ORG--</option>
 
                 {orgs.map((org:any)=>(
                   <option key={org._id} value={org._id}>

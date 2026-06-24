@@ -2,19 +2,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "@/lib/axios"; // Your axios instance
 
-export default function NewJob() {
-  const [checklist, setChecklist] = useState([
-    {
-      id: 1,
-      type: "section",
-      title: "Section",
-    },
-    {
-      id: 2,
-      type: "item",
-      title: "Checklist item #2",
-    },
-  ]);
+export default function EditJobModel({
+  job,
+  onClose,
+}: any) {
+ 
+ const [checklist, setChecklist] = useState<any[]>([]);
 
   // Form States
   const [formData, setFormData] = useState({
@@ -40,35 +33,10 @@ const [clientLoading, setClientLoading] = useState(false);
   const [technician, setTechnician] = useState<any[]>([]);
 const [technicianLoading, setTechnicianLoading] = useState(false);
 
-  const [jobTemplateData, setjobTemplateData] = useState<any[]>([]);
-const [jobTemplateLoadingData, setjobTemplateLoadingData] = useState(false);
-
 useEffect(() => {
   getClients();
   getTechnicians();
-  getJobTemplate();
 }, []);
-
-
-
-
-const getJobTemplate = async () => {
-  try {
-    setjobTemplateLoadingData(true);
-
-    const { data } = await axios.get(
-      "/v1/jobTemplateList"
-    );
-
-    setjobTemplateData(data?.data || []);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    setjobTemplateLoadingData(false);
-  }
-};
-
-
 
 const getClients = async () => {
   try {
@@ -156,36 +124,6 @@ const getTechnicians = async () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-
-const handleTemplateChange = (e:any) => {
-  const templateId = e.target.value;
-
-  const selectedTemplate = jobTemplateData.find(
-    (item:any) => item._id === templateId
-  );
-
-  if (!selectedTemplate) return;
-
-  setFormData((prev:any) => ({
-    ...prev,
-    jobTemplate: templateId,
-    title: selectedTemplate.jobTitle || "",
-    description: selectedTemplate.jobDescription || "",
-  }));
-
-  // Checklist set
-  if (selectedTemplate.checklist?.length) {
-    setChecklist(
-      selectedTemplate.checklist.map((item:any, index:any) => ({
-        id: Date.now() + index,
-        type: item.type || "item",
-        title: item.title || item,
-      }))
-    );
-  } else {
-    setChecklist([]);
-  }
-};
   // =========================
   // Submit Form
   // =========================
@@ -195,17 +133,24 @@ const handleTemplateChange = (e:any) => {
     setMessage(null);
 
     try {
-     const payload = {
-  ...formData,
+      const payload = {
+        ...formData,
+        checklist: checklist, // Sending checklist as array
+      };
 
-  checklist: checklist.map((item:any) => ({
-    type: item.type,
-    title: item.title,
-  })),
-};
-      const { data } = await axios.post("/v1/jobAdd", payload); // Adjust endpoint if needed
+     await axios.put(
+  `/v1/jobUpdate/${job._id}`,
+  payload
+);// Adjust endpoint if needed
 
-      setMessage({ type: "success", text: "Job created successfully!" });
+      setMessage({
+  type: "success",
+  text: "Job updated successfully!"
+});
+
+setTimeout(() => {
+  onClose?.();
+}, 1000);
       
       // Optional: Reset form after success
       // setFormData({ ...initialState });
@@ -221,6 +166,39 @@ const handleTemplateChange = (e:any) => {
     }
   };
 
+  useEffect(() => {
+  if (!job) return;
+
+  setFormData({
+    jobTemplate: job.jobTemplate || "",
+    title: job.title || "",
+    client: job.client?._id || "",
+    assignedTechnician:
+      job.assignedTechnician?._id || "",
+    priority: job.priority || "Medium",
+    scheduleStart: job.scheduleStart
+      ? new Date(job.scheduleStart)
+          .toISOString()
+          .slice(0, 16)
+      : "",
+    scheduleEnd: job.scheduleEnd
+      ? new Date(job.scheduleEnd)
+          .toISOString()
+          .slice(0, 16)
+      : "",
+    description: job.description || "",
+    address: job.address || "",
+    city: job.city || "",
+    state: job.state || "",
+  });
+
+ setChecklist(
+  Array.isArray(job?.checklist)
+    ? job.checklist
+    : []
+);
+}, [job]);
+
   return (
     <div>
       <form role="form" onSubmit={handleSubmit}>
@@ -228,20 +206,15 @@ const handleTemplateChange = (e:any) => {
           {/* ================= FORM ================= */}
           <div className="form-group">
             <label>Job Template</label>
-           <select
-  name="jobTemplate"
-  value={formData.jobTemplate}
-  onChange={handleTemplateChange}
-  className="form-control"
->
-  <option value="">Select Job Template</option>
-
-  {jobTemplateData.map((item) => (
-    <option key={item._id} value={item._id}>
-      {item.templateName}
-    </option>
-  ))}
-</select>          </div>
+            <input
+              type="text"
+              name="jobTemplate"
+              value={formData.jobTemplate}
+              onChange={handleChange}
+              className="form-control"
+              placeholder="Enter template"
+            />
+          </div>
 
           <div className="form-group">
             <label>Job Title *</label>
@@ -391,7 +364,7 @@ const handleTemplateChange = (e:any) => {
             {/* ================= LIST ================= */}
             {checklist.map((item: any) => (
               <div
-                key={item.id}
+                key={item._id}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -438,7 +411,7 @@ const handleTemplateChange = (e:any) => {
             >
               <h4>Preview</h4>
               {checklist.map((item: any) => (
-                <div key={item.id} style={{ marginBottom: "10px" }}>
+                <div key={item._id} style={{ marginBottom: "10px" }}>
                   {item.type === "section" ? (
                     <h5
                       style={{
@@ -513,7 +486,9 @@ const handleTemplateChange = (e:any) => {
               className="btn btn-primary btn-block"
               disabled={loading}
             >
-              {loading ? "Creating Job..." : "Create Job"}
+              {loading
+  ? "Updating Job..."
+  : "Update Job"}
             </button>
           </div>
         </div>

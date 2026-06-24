@@ -6,8 +6,8 @@ export async function getCurrentUser() {
 
   if (!token) return null;
 
-  const res = await fetch("https://api.prismplus.ai/v1/me", {
-  // const res = await fetch("http://localhost:1100/v1/me", {
+  // const res = await fetch("https://api.prismplus.ai/v1/me", {
+  const res = await fetch("http://localhost:1100/v1/me", {
     headers: {
       cookie: `auth_token=${token}`
     },

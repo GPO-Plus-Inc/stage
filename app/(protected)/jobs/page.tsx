@@ -6,11 +6,13 @@ import OneTimeJob from "@/component/jobs/oneTimeJob";
 import RecurringJobs from "@/component/jobs/recurringJobs";
 import CompletedJobs from "@/component/jobs/completedJobs";
 import NewJobBox from "@/component/jobs/modalBox/NewJobBox";
+import NewRecurringJobBox from "@/component/jobs/modalBox/NewRecurringJobBox";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState("one-time");
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [jobCount, setJobCount] = useState(0);
+  const [reccuringJobCount, setReccuringJobCount] = useState(0);
 
   console.log("jobCount====>",jobCount)
 
@@ -23,7 +25,7 @@ export default function Page() {
     {
       key: "recurring",
       label: "Recurring Jobs",
-      count: 0,
+      count: reccuringJobCount,
     },
     {
       key: "service",
@@ -59,19 +61,26 @@ export default function Page() {
 
       case "recurring":
         return (
-          <div className="d-flex gap-2">
+          <div className="d-flex gap-2 pull-left">
             <button
-              className="btn btn-success"
+              className="btn btn-success pull-left"
               onClick={(e:any) => setActiveModal("importExport")}
             >
               Import / Export
             </button>
 
             <button
-              className="btn btn-warning"
+              className="btn btn-default pull-left"
               onClick={(e:any) => setActiveModal("generateJobs")}
             >
               Generate Jobs
+            </button>
+
+            <button
+              className="btn btn-warning pull-left"
+              onClick={(e:any) => setActiveModal("recurringJob")}
+            >
+              + Create Recurring Jobs
             </button>
           </div>
         );
@@ -120,7 +129,7 @@ export default function Page() {
         return <OneTimeJob onCountChange={setJobCount}/>;
 
       case "recurring":
-        return <RecurringJobs />;
+        return <RecurringJobs onCountChange={setReccuringJobCount} />;
 
       case "service":
         return (
@@ -158,6 +167,9 @@ export default function Page() {
       case "generateJobs":
         return "Generate Jobs";
 
+      case "recurringJob":
+        return "Create Recurring Job";
+
       case "serviceRequest":
         return "New Service Request";
 
@@ -185,6 +197,9 @@ export default function Page() {
 
       case "generateJobs":
         return <p>Generate Jobs Content Here</p>;
+
+      case "recurringJob":
+        return <NewRecurringJobBox/>;
 
       case "serviceRequest":
         return <p>Service Request Form Here</p>;
@@ -251,7 +266,7 @@ export default function Page() {
                   {tab.label} ({tab.count})
                 </button>
               ))}
-            <div className="pull-right">{renderButtons()}</div>
+            <div className="pull-left">{renderButtons()}</div>
             </div>
 
             {/* Dynamic Buttons */}
@@ -305,25 +320,7 @@ export default function Page() {
                 </div>
 
                 {/* Footer */}
-
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-default"
-                    onClick={() =>
-                      setActiveModal(null)
-                    }
-                  >
-                    Close
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                  >
-                    Save
-                  </button>
-                </div>
+ 
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import api from "@/lib/axios";
+import EditJobModal from "./modalBox/EditJobModel"
 
 export default function OneTimeJob({ onCountChange }:any) {
   const [jobs, setJobs] = useState([]);
@@ -12,6 +13,9 @@ export default function OneTimeJob({ onCountChange }:any) {
   const [status, setStatus] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [templateFilter, setTemplateFilter] = useState("");
+
+  const [showEditModal, setShowEditModal] = useState(false);
+const [selectedJob, setSelectedJob] = useState<any>(null);
 
   // ==========================
   // Get Jobs
@@ -61,24 +65,23 @@ export default function OneTimeJob({ onCountChange }:any) {
   // ==========================
   // Update Status
   // ==========================
-  const updateJobStatus = async (jobId:any, newStatus:any) => {
-    try {
-      await api.patch(`/v1/job/status/${jobId}`, {
+const updateJobStatus = async (
+  jobId: any,
+  newStatus: any
+) => {
+  try {
+    await api.patch(
+      `/v1/jobStatus/${jobId}`,
+      {
         status: newStatus,
-      });
+      }
+    );
 
-      setJobs((prev:any) =>
-        prev.map((job:any) =>
-          job._id === jobId
-            ? { ...job, status: newStatus }
-            : job
-        )
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
+    getJobs();
+  } catch (error) {
+    console.log(error);
+  }
+};
   const getPriorityClass = (priority:any) => {
     switch (priority) {
       case "High":
@@ -336,13 +339,13 @@ export default function OneTimeJob({ onCountChange }:any) {
                       width: "130px",
                     }}
                     value={job.status}
-                    onChange={(e:any) =>
-                      updateJobStatus(
-                        job._id,
-                        e.target.value
-                      )
-                    }
-                  >
+                    onChange={(e: any) =>
+                     updateJobStatus(
+                          job._id,
+                          e.target.value
+                        )
+                      }
+                     >
                     <option value="Pending">
                       Pending
                     </option>
@@ -374,9 +377,15 @@ export default function OneTimeJob({ onCountChange }:any) {
                     <i className="fa fa-file-text-o"></i>
                   </button>
 
-                  <button className="btn btn-default btn-sm">
-                    <i className="fa fa-pencil"></i>
-                  </button>
+                 <button
+  className="btn btn-default btn-sm"
+  onClick={() => {
+    setSelectedJob(job);
+    setShowEditModal(true);
+  }}
+>
+  <i className="fa fa-pencil"></i>
+</button>
 
                   <button className="btn btn-default btn-sm">
                     <i className="fa fa-trash"></i>
@@ -387,6 +396,63 @@ export default function OneTimeJob({ onCountChange }:any) {
           </div>
         ))
       )}
+
+{showEditModal && (
+  <>
+<div
+  className="modal fade in"
+  style={{
+    display: "block",
+    background: "rgba(0,0,0,.5)",
+    overflowY: "auto",
+    padding: "20px 0",
+  }}
+>
+     <div
+  className="modal-dialog modal-lg"
+  style={{
+    width: "50%",
+    maxWidth: "1100px",
+    margin: "20px auto",
+  }}
+>
+ <div className="modal-content">
+          <div className="modal-header">
+            <button
+              type="button"
+              className="close"
+              onClick={() => {
+                setShowEditModal(false);
+                setSelectedJob(null);
+              }}
+            >
+              ×
+            </button>
+
+            <h4 className="modal-title">
+              Edit Job
+            </h4>
+          </div>
+
+          <div className="modal-body"> 
+  <EditJobModal
+    job={selectedJob}
+    onClose={() => {
+      setShowEditModal(false);
+      setSelectedJob(null);
+      getJobs();
+    }}
+  /> 
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="modal-backdrop fade in"></div>
+  </>
+)}
+
+
     </div>
   );
 }
