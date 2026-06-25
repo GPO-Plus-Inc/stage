@@ -38,7 +38,7 @@ export default function AdminUI({ user, children }: Props) {
         </li>
        <li>
           <Link href="/admin/qbo" className="btn bg-purple btn-flat">
-            Quick Books online
+            QBO
           </Link>
         </li>
        <li>
@@ -67,8 +67,8 @@ export default function AdminUI({ user, children }: Props) {
           </Link>
         </li>
        <li>
-          <a href="#" className="btn bg-green btn-flat">
-            Help (PDF)
+          <a href="/admin/permissions" className="btn bg-green btn-flat">
+            Role & Permissions
           </a>
         </li>
        <li>

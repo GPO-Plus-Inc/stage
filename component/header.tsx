@@ -4,6 +4,24 @@ import { useUser } from "@/context/userContext";
 
 export default function header() {
   const user = useUser();
+
+const toggleSidebar = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  e.preventDefault();
+
+  document.body.classList.add("sidebar-animating");
+
+  if (window.innerWidth <= 768) {
+    document.body.classList.toggle("sidebar-open");
+  } else {
+    document.body.classList.toggle("sidebar-collapse");
+  }
+
+  setTimeout(() => {
+    document.body.classList.remove("sidebar-animating");
+  }, 300);
+};
+
+
 	return (
 		<div>
 		<header className="main-header">
@@ -26,8 +44,7 @@ export default function header() {
       className="sidebar-toggle"
       data-toggle="offcanvas"
       role="button"
-    >
-      <span className="sr-only">Toggle navigation</span>
+      onClick={toggleSidebar}>
     </a>
     <div className="navbar-custom-menu">
       <ul className="nav navbar-nav">

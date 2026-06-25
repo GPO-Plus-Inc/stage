@@ -1,6 +1,90 @@
-import React from 'react'
+"use client";
+
+import React, { useEffect, useState } from "react";
+import axios from "@/lib/axios";
 
 export default function Adminpage() {
+  const [stats, setStats] = useState({
+  jobsScheduledToday: 0,
+  jobsCompletedToday: 0,
+  workersScheduledToday: 0,
+  totalWorkers: 0,
+  totalServiceLocations: 0,
+  newServiceLocationsThisMonth: 0,
+  revenueToday: 0,
+  revenueThisMonth: 0,
+});
+
+  const [recentJobs, setRecentJobs] = useState([]);
+  const [todayJobs, setTodayJobs] = useState([]);
+const [loading, setLoading] = useState(false);
+const [weekStats, setWeekStats] = useState({
+  jobsCompleted: 0,
+  revenue: 0,
+  avgJobTime: 0,
+});
+
+const fetchWeekStats = async () => {
+  try {
+    const { data } = await axios.get("/v1/thisWeek");
+
+    if (data.success) {
+      setWeekStats(data.data);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const fetchTodayJobs = async () => {
+  try {
+    setLoading(true);
+
+    const { data } = await axios.get(
+      "/v1/jobList?status=scheduled&date=today"
+    );
+
+    if (data.success) {
+      setTodayJobs(data.data);
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+ 
+const fetchRecentJobs = async () => {
+  try {
+    const { data } = await axios.get("/v1/recentJobs");
+
+    if (data.success) {
+      setRecentJobs(data.data);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+useEffect(() => {
+  fetchDashboard();
+  fetchRecentJobs();
+  fetchTodayJobs();
+  fetchWeekStats();
+}, []);
+
+const fetchDashboard = async () => {
+  try {
+    const { data } = await axios.get("/v1/dashboardStats");
+
+    if (data.success) {
+      setStats(data.data);
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
 	return ( 
 			 <div className="content-wrapper">
     {/* Content Header (Page header) */}
@@ -29,17 +113,18 @@ export default function Adminpage() {
           <div className="row">
   <div className="col-lg-3 col-xs-6">
     {/* small box */}
-    <div className="small-box bg-aqua">
+    <div className="small-box bg-blue">
       <div className="inner">
-        <h3>150</h3>
-        <p>New Orders</p>
+        <h3>{stats.jobsScheduledToday}</h3>
+        <p>Jobs Scheduled Today</p>
+        
       </div>
       <div className="icon">
         <i className="ion ion-bag" />
       </div>
-      <a href="#" className="small-box-footer">
-        More info <i className="fa fa-arrow-circle-right" />
-      </a>
+      <p className="small-box-footer">
+        Jobs Completed: {stats.jobsCompletedToday}
+      </p>
     </div>
   </div>
   {/* ./col */}
@@ -47,49 +132,47 @@ export default function Adminpage() {
     {/* small box */}
     <div className="small-box bg-green">
       <div className="inner">
-        <h3>
-          53<sup style={{ fontSize: 20 }}>%</sup>
-        </h3>
-        <p>Bounce Rate</p>
+        <h3>{stats.workersScheduledToday}</h3>
+        <p>Workers Scheduled Today</p>
       </div>
       <div className="icon">
         <i className="ion ion-stats-bars" />
       </div>
-      <a href="#" className="small-box-footer">
-        More info <i className="fa fa-arrow-circle-right" />
-      </a>
+      <p className="small-box-footer">
+        {stats.totalWorkers} clocked in
+      </p>
     </div>
   </div>
   {/* ./col */}
   <div className="col-lg-3 col-xs-6">
     {/* small box */}
-    <div className="small-box bg-yellow">
+    <div className="small-box bg-green">
       <div className="inner">
-        <h3>44</h3>
-        <p>User Registrations</p>
+   <h3>{stats.totalServiceLocations}</h3>
+        <p>Service Locations</p>
       </div>
       <div className="icon">
         <i className="ion ion-person-add" />
       </div>
-      <a href="#" className="small-box-footer">
-        More info <i className="fa fa-arrow-circle-right" />
-      </a>
+      <p className="small-box-footer">
+        {stats.newServiceLocationsThisMonth} new this month
+      </p>
     </div>
   </div>
   {/* ./col */}
   <div className="col-lg-3 col-xs-6">
     {/* small box */}
-    <div className="small-box bg-red">
+    <div className="small-box bg-blue">
       <div className="inner">
-        <h3>65</h3>
-        <p>Unique Visitors</p>
+        <h3>${stats.revenueToday}</h3>
+        <p>Revenue Today</p>
       </div>
       <div className="icon">
         <i className="ion ion-pie-graph" />
       </div>
-      <a href="#" className="small-box-footer">
-        More info <i className="fa fa-arrow-circle-right" />
-      </a>
+      <p className="small-box-footer">
+        ${stats.revenueThisMonth} this month
+      </p>
     </div>
   </div>
   {/* ./col */}
@@ -114,7 +197,7 @@ export default function Adminpage() {
     </p>
 
     <a
-      href="#"
+      href="/jobs"
       className="text-decoration-none fw-medium text-success pull-right"
     >
       View all
@@ -122,6 +205,10 @@ export default function Adminpage() {
   </div>
 
   {/* Body */}
+
+<div className="box-body">
+  {recentJobs.length === 0 ? (
+   
   <div
     className="box-body d-flex flex-column justify-content-center align-items-center text-center"
     style={{ minHeight: "320px" }}
@@ -151,6 +238,50 @@ export default function Adminpage() {
       Create your first job
     </button>
   </div>
+  ) : (
+    recentJobs.map((job: any) => (
+      <div className="recent-job-card" key={job._id}>
+        <div className="job-left">
+          <div className="job-icon">
+            <i className="fa fa-check-circle"></i>
+          </div>
+
+          <div>
+            <h4>{job.jobTemplate?.title || job.title}</h4>
+
+            <div className="job-subtitle">
+              <span>{job.client?.location_name}</span>
+
+              <span>
+                <i className="fa fa-map-marker"></i>
+
+                {job?.client.city}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="job-right">
+          <span
+            className={`job-status ${
+              job.status === "Completed"
+                ? "completed"
+                : "pending"
+            }`}
+          >
+            {job.status}
+          </span>
+
+          <div className="job-date">
+            {new Date(job.scheduleStart).toLocaleDateString()}
+          </div>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
+
 </div>
 
 
@@ -162,14 +293,17 @@ export default function Adminpage() {
     </p>
 
     <a
-      href="#"
+      href="/jobs?status=scheduled&date=today"
       className="text-decoration-none fw-medium text-success pull-right"
     >
       View all
     </a>
   </div>
 
-  {/* Body */}
+  <div className="box-body">
+  {loading ? (
+    <p>Loading...</p>
+  ) : todayJobs.length === 0 ? ( 
   <div
     className="box-body d-flex flex-column justify-content-center align-items-center text-center"
     style={{ minHeight: "320px" }}
@@ -194,6 +328,58 @@ export default function Adminpage() {
     </h5>
 
   </div>
+  ) : (
+    todayJobs.map((job: any) => (
+      <div
+        key={job._id}
+        className="recent-job-card"
+      >
+        <div className="job-left">
+          <div className="job-icon">
+            <i className="fa fa-calendar-check-o"></i>
+          </div>
+
+          <div>
+            <h4>{job.title}</h4>
+
+            <p>
+              {job.client?.location_name}
+            </p>
+
+            <span>
+              <i className="fa fa-map-marker"></i>{" "}
+              {job.client?.city}
+            </span>
+          </div>
+        </div>
+
+        <div className="job-right">
+          <span
+            className={`label ${
+              job.status === "Completed"
+                ? "label-success"
+                : job.status === "Pending"
+                ? "label-warning"
+                : job.status === "Assigned"
+                ? "label-primary"
+                : "label-info"
+            }`}
+          >
+            {job.status}
+          </span>
+
+          <br />
+
+          <small>
+            {new Date(job.scheduleStart).toLocaleDateString()}
+          </small>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
+
 </div>
       
    
@@ -221,51 +407,71 @@ export default function Adminpage() {
   </div>
 
     
-    <div className="box-body"> 
-  <div className="info-box">
-    <span className="info-box-icon bg-aqua">
-      <i className="fa fa-envelope-o" />
-    </span>
-    <div className="info-box-content">
-      <span className="info-box-text">Messages</span>
-      <span className="info-box-number">1,410</span>
-    </div> 
-  {/* /.info-box */}
-</div>
+    <div className="box-body">  
+    <a href="/jobs">
+     <div
+        className="recent-job-card"
+      >
+        <div className="job-left">
+          <div className="job-icon">
+            <i className="fa fa-plus"></i>
+          </div>
+
+          <div>
+            <h4>New Jobs</h4>
+
+            <p>
+              Create a service jobs
+            </p> 
+          </div>
+        </div>
+ 
+      </div>
+    </a>  
 
 
-  <div className="info-box">
-    <span className="info-box-icon bg-aqua">
-      <i className="fa fa-envelope-o" />
-    </span>
-    <div className="info-box-content">
-      <span className="info-box-text">Messages</span>
-      <span className="info-box-number">1,410</span>
-    </div> 
-  {/* /.info-box */}
-</div>
+ <a href="/clients">
+     <div
+        className="recent-job-card"
+      >
+        <div className="job-left">
+          <div className="job-icon">
+            <i className="fa fa-user"></i>
+          </div>
 
-  <div className="info-box">
-    <span className="info-box-icon bg-aqua">
-      <i className="fa fa-envelope-o" />
-    </span>
-    <div className="info-box-content">
-      <span className="info-box-text">Messages</span>
-      <span className="info-box-number">1,410</span>
-    </div> 
-  {/* /.info-box */}
-</div>
+          <div>
+            <h4>New Service Location</h4>
 
-  <div className="info-box">
-    <span className="info-box-icon bg-aqua">
-      <i className="fa fa-envelope-o" />
-    </span>
-    <div className="info-box-content">
-      <span className="info-box-text">Messages</span>
-      <span className="info-box-number">1,410</span>
-    </div> 
-  {/* /.info-box */}
-</div>
+            <p>
+            Add a location
+            </p> 
+          </div>
+        </div>
+ 
+      </div>
+    </a> 
+
+ <a href="/inventory">
+     <div
+        className="recent-job-card"
+      >
+        <div className="job-left">
+          <div className="job-icon">
+            <i className="fa fa-plus"></i>
+          </div>
+
+          <div>
+            <h4>Inventory</h4>
+
+            <p>
+             Manage your parts and materials
+            </p> 
+          </div>
+        </div>
+ 
+      </div>
+    </a>  
+ 
 
      
     </div>
@@ -283,26 +489,32 @@ export default function Adminpage() {
 
     
     <div className="box-body">
-    <ul className="nav nav-stacked">
+<ul className="nav nav-stacked">
   <li>
-    <a href="#">
-      Projects <span className="pull-right badge bg-blue">31</span>
-    </a>
+    <p>
+      Jobs Completed
+      <span className="pull-right badge bg-blue">
+        {weekStats.jobsCompleted}
+      </span>
+    </p>
   </li>
+
   <li>
-    <a href="#">
-      Tasks <span className="pull-right badge bg-aqua">5</span>
-    </a>
+    <p>
+      Revenue
+      <span className="pull-right badge bg-aqua">
+        ${weekStats.revenue}
+      </span>
+    </p>
   </li>
+
   <li>
-    <a href="#">
-      Completed Projects <span className="pull-right badge bg-green">12</span>
-    </a>
-  </li>
-  <li>
-    <a href="#">
-      Followers <span className="pull-right badge bg-red">842</span>
-    </a>
+    <p>
+      Avg. Job Time
+      <span className="pull-right badge bg-green">
+        {weekStats.avgJobTime} min
+      </span>
+    </p>
   </li>
 </ul>
 

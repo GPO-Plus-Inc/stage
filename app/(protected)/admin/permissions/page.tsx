@@ -40,7 +40,7 @@ const togglePermission=(role:any,permission:string)=>{
 
 const updateRole=async(roleId:string,permissions:any)=>{
 
- await api.put(`/v1/roles/${roleId}`,{
+ await api.put(`/v1/updateRolePermissions/${roleId}`,{
   permissions
  });
 
